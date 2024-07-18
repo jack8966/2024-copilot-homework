@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Manager</title>
+    <!-- Add these two script tags to your head -->
+    <script
+      src="https://unpkg.com/react@17/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const App = () => {
+        const [expenses, setExpenses] = useState([]);
+        const [description, setDescription] = useState('');
+        const [amount, setAmount] = useState('');
+        const [editId, setEditId] = useState(null);
+
+        useEffect(() => {
+          loadExpenses();
+        }, []);
+
+        const loadExpenses = async () => {
+          const result = await axios.get('/api/expenses');
+          setExpenses(result.data);
+        };
+
+        const createExpense = async () => {
+          if (description && amount) {
+            await axios.post('/api/expenses', { description, amount });
+            setDescription('');
+            setAmount('');
+            loadExpenses();
+          }
+        };
+
+        const updateExpense = async () => {
+          if (description && amount) {
+            await axios.put(`/api/expenses/${editId}`, { description, amount });
+            setDescription('');
+            setAmount('');
+            setEditId(null);
+            loadExpenses();
+          }
+        };
+
+        const deleteExpense = async (id) => {
+          await axios.delete(`/api/expenses/${id}`);
+          loadExpenses();
+        };
+
+        return (
+          <div className="container">
+            <h1>Expense Manager</h1>
+            <input
+              className="form-control"
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <input
+              className="form-control"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            {editId ? (
+              <button className="btn btn-success" onClick={updateExpense}>
+                Update Expense
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={createExpense}>
+                Add Expense
+              </button>
+            )}
+            {expenses.map((expense) => (
+              <div key={expense.id}>
+                <p>Description: {expense.description}</p>
+                <p>Amount: {expense.amount}</p>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => deleteExpense(expense.id)}
+                >
+                  Delete
+                </button>
+                <button
+                  className="btn btn-info"
+                  onClick={() => {
+                    setDescription(expense.description);
+                    setAmount(expense.amount);
+                    setEditId(expense.id);
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+            ))}
+          </div>
+        );
+      };
+
+      const domContainer = document.querySelector('#root');
+      ReactDOM.render(React.createElement(App), domContainer);
+    </script>
+  </body>
+</html>
